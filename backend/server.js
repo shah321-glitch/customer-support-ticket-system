@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-
 const fs = require("fs");
+const mongoose = require("mongoose");
 
 // Load .env from backend folder or root folder
 require("dotenv").config();
@@ -10,10 +10,14 @@ require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 const connectDB = require("./config/db");
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Ensure uploads directory exists (use /tmp/uploads in serverless if needed)
+const uploadsDir = process.env.VERCEL ? "/tmp/uploads" : path.join(__dirname, "uploads");
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (e) {
+  console.warn("Uploads directory creation skipped:", e.message);
 }
 
 const app = express();
@@ -21,7 +25,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || true,
+    origin: true,
     credentials: true,
   })
 );
@@ -29,20 +33,57 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(uploadsDir));
 
-// Database connect karna
-connectDB();
-
-// Test Route
+// Test Root Route
 app.get("/", (req, res) => {
   res.json({ message: "Customer Support Ticket System API is running 🚀" });
+});
+
+// Diagnostic Health Route
+app.get("/api/health", (req, res) => {
+  const hasMongoUri = Boolean(process.env.MONGO_URI);
+  const maskedUri = hasMongoUri
+    ? process.env.MONGO_URI.replace(/:([^@]+)@/, ":****@")
+    : "NOT SET";
+  const hasJwt = Boolean(process.env.JWT_SECRET);
+  const dbState = ["disconnected", "connected", "connecting", "disconnecting"][
+    mongoose.connection.readyState
+  ] || "unknown";
+
+  res.json({
+    status: "ok",
+    hasMongoUri,
+    maskedUri,
+    hasJwt,
+    dbState,
+    isVercel: Boolean(process.env.VERCEL),
+    nodeEnv: process.env.NODE_ENV || "development",
+  });
+});
+
+// Middleware: Ensure MongoDB is connected before handling any API routes
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database connection middleware error:", error.message);
+    return res.status(500).json({
+      message: "Database connection failed",
+      error: error.message,
+    });
+  }
 });
 
 // Routes link karna
 app.use("/api/auth", require("./routes/authroutes"));
 app.use("/api/tickets", require("./routes/ticketRoutes"));
-app.get("/api/stats", require("./middleware/auth").protect, require("./controllers/ticketControllers").getStats);
+app.get(
+  "/api/stats",
+  require("./middleware/auth").protect,
+  require("./controllers/ticketControllers").getStats
+);
 
 // 404 Route Handler
 app.use((req, res) => {
@@ -61,7 +102,7 @@ app.use((err, req, res, next) => {
 module.exports = app;
 
 // Local server start karna
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
