@@ -44,6 +44,12 @@ const TopBar = ({ searchQuery = "", onSearchChange }) => {
         subtitle: "Instant solutions and troubleshooting articles",
       };
     }
+    if (path.includes("agent-performance") || path.includes("performance")) {
+      return {
+        title: "Agent Performance Analytics",
+        subtitle: "Monitor team resolution rates, workload distribution, and customer satisfaction ratings",
+      };
+    }
     return {
       title: "ResolveDesk Support Portal",
       subtitle: "Customer support ticket management",

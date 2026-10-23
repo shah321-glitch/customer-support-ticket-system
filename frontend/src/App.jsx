@@ -13,6 +13,7 @@ import CreateTicketPage from "./pages/CreateTicketPage";
 import TicketDetailPage from "./pages/TicketDetailPage";
 import KnowledgePage from "./pages/KnowledgePage";
 import ProfilePage from "./pages/ProfilePage";
+import AgentPerformancePage from "./pages/AgentPerformancePage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
@@ -69,8 +70,29 @@ function App() {
               }
             />
 
-            {/* Knowledge Base */}
-            <Route path="knowledge" element={<KnowledgePage />} />
+            {/* Knowledge Base (Customer privilege) */}
+            <Route
+              path="knowledge"
+              element={
+                <ProtectedRoute allowedRoles={["customer"]}>
+                  <KnowledgePage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Agent Performance Analytics: Admin only */}
+            <Route
+              path="admin/agent-performance"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AgentPerformancePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="agents/performance"
+              element={<Navigate to="/admin/agent-performance" replace />}
+            />
 
             {/* User Profile & Privileges */}
             <Route

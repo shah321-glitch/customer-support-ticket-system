@@ -1,4 +1,5 @@
 const Ticket = require("../models/Ticket");
+const User = require("../models/user");
 const { sendEmailNotification } = require("../utils/emailService");
 
 // @desc    Create a new ticket
@@ -445,11 +446,129 @@ const submitFeedback = async (req, res) => {
   }
 };
 
+// @desc    Get Agent Performance metrics (Admin only)
+// @route   GET /api/tickets/agent-performance
+// @access  Private (Admin only)
+const getAgentPerformance = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        message: "Access denied. Only administrators have privilege to view agent performance analytics.",
+      });
+    }
+
+    // Find all users who are registered as agents (or admins assigned tickets)
+    const agents = await User.find({ role: { $in: ["agent", "admin"] } })
+      .select("_id name email role createdAt")
+      .sort({ role: 1, name: 1 });
+
+    // Fetch all tickets to calculate metrics accurately
+    const tickets = await Ticket.find({})
+      .select("title category priority status assignedTo createdBy feedback createdAt updatedAt")
+      .populate("createdBy", "name email");
+
+    // Compute metrics per agent
+    const agentStats = agents.map((agent) => {
+      const agentIdStr = agent._id.toString();
+      const assignedTickets = tickets.filter(
+        (t) => t.assignedTo && t.assignedTo.toString() === agentIdStr
+      );
+
+      const totalAssigned = assignedTickets.length;
+      const openCount = assignedTickets.filter((t) => t.status === "Open").length;
+      const inProgressCount = assignedTickets.filter((t) => t.status === "In Progress").length;
+      const resolvedCount = assignedTickets.filter((t) => t.status === "Resolved").length;
+      const closedCount = assignedTickets.filter((t) => t.status === "Closed").length;
+      const completedCount = resolvedCount + closedCount;
+
+      const resolutionRate = totalAssigned > 0
+        ? Math.round((completedCount / totalAssigned) * 100)
+        : 0;
+
+      // Customer feedback & ratings
+      const ratedTickets = assignedTickets.filter((t) => t.feedback && t.feedback.rating);
+      const totalRatings = ratedTickets.length;
+      const sumRatings = ratedTickets.reduce((acc, t) => acc + Number(t.feedback.rating), 0);
+      const avgRating = totalRatings > 0 ? parseFloat((sumRatings / totalRatings).toFixed(1)) : 0;
+
+      // Customer reviews list
+      const customerReviews = ratedTickets
+        .map((t) => ({
+          ticketId: t._id,
+          ticketTitle: t.title,
+          customerName: t.createdBy?.name || "Customer",
+          customerEmail: t.createdBy?.email || "",
+          rating: t.feedback.rating,
+          comment: t.feedback.comment || "",
+          createdAt: t.feedback.createdAt || t.updatedAt,
+        }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      const byPriority = {
+        Urgent: assignedTickets.filter((t) => t.priority === "Urgent").length,
+        High: assignedTickets.filter((t) => t.priority === "High").length,
+        Medium: assignedTickets.filter((t) => t.priority === "Medium").length,
+        Low: assignedTickets.filter((t) => t.priority === "Low").length,
+      };
+
+      return {
+        _id: agent._id,
+        name: agent.name,
+        email: agent.email,
+        role: agent.role,
+        joinedAt: agent.createdAt,
+        totalAssigned,
+        openCount,
+        inProgressCount,
+        resolvedCount,
+        closedCount,
+        completedCount,
+        resolutionRate,
+        avgRating,
+        totalRatings,
+        customerReviews,
+        byPriority,
+      };
+    });
+
+    // Team summary metrics across all support agents
+    const onlyAgents = agentStats.filter((a) => a.role === "agent");
+    const totalAgents = onlyAgents.length;
+    const totalAssignedTeam = agentStats.reduce((sum, a) => sum + a.totalAssigned, 0);
+    const totalResolvedTeam = agentStats.reduce((sum, a) => sum + a.completedCount, 0);
+    const overallTeamResolutionRate = totalAssignedTeam > 0
+      ? Math.round((totalResolvedTeam / totalAssignedTeam) * 100)
+      : 0;
+
+    const totalTeamReviews = agentStats.reduce((sum, a) => sum + a.totalRatings, 0);
+    const sumAllRatings = agentStats.reduce((sum, a) => sum + (a.avgRating * a.totalRatings), 0);
+    const teamAvgRating = totalTeamReviews > 0
+      ? parseFloat((sumAllRatings / totalTeamReviews).toFixed(1))
+      : 5.0;
+
+    res.json({
+      summary: {
+        totalAgents,
+        totalAssignedTeam,
+        totalResolvedTeam,
+        overallTeamResolutionRate,
+        teamAvgRating,
+        totalTeamReviews,
+      },
+      agents: agentStats,
+    });
+  } catch (error) {
+    console.error("Agent performance error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createTicket,
   getTickets,
   getTicketById,
   getStats,
+  getAgentPerformance,
   updateTicket,
   addComment,
   getTicketComments,

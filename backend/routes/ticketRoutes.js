@@ -5,6 +5,7 @@ const {
   getTickets,
   getTicketById,
   getStats,
+  getAgentPerformance,
   updateTicket,
   addComment,
   getTicketComments,
@@ -21,8 +22,9 @@ router.route("/")
   .post(upload.single("attachment"), createTicket)
   .get(getTickets);
 
-// Stats route BEFORE /:id to avoid route conflict
+// Stats & Agent Performance routes BEFORE /:id to avoid route conflict
 router.get("/stats", getStats);
+router.get("/agent-performance", getAgentPerformance);
 
 router.route("/:id")
   .get(getTicketById)

@@ -119,6 +119,15 @@ export const api = {
     return data;
   },
 
+  getAgentPerformance: async () => {
+    const res = await fetch(`${API_BASE}/tickets/agent-performance`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to load agent performance analytics");
+    return data;
+  },
+
   // Tickets
   getTickets: async (filter = {}, page = 1, limit = 10) => {
     let url = `${API_BASE}/tickets`;

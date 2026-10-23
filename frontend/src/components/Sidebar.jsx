@@ -12,7 +12,8 @@ import {
   UserPlus,
   Layers,
   Sparkles,
-  User
+  User,
+  Award
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -24,9 +25,16 @@ const Sidebar = ({ openTicketCount = 0 }) => {
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/tickets", label: "Ticket Queue", icon: Ticket, badge: openTicketCount },
     ...(user?.role === "customer"
-      ? [{ to: "/tickets/new", label: "Create Ticket", icon: PlusCircle }]
+      ? [
+          { to: "/tickets/new", label: "Create Ticket", icon: PlusCircle },
+          { to: "/knowledge", label: "Knowledge Base", icon: LifeBuoy },
+        ]
       : []),
-    { to: "/knowledge", label: "Knowledge Base", icon: LifeBuoy },
+    ...(user?.role === "admin"
+      ? [
+          { to: "/admin/agent-performance", label: "Agent Performance", icon: Award },
+        ]
+      : []),
   ];
 
   const accountPages = [
@@ -122,17 +130,19 @@ const Sidebar = ({ openTicketCount = 0 }) => {
         </span>
         {corePages.map(renderNavLink)}
 
-        {/* Action Button: Quick Raise Ticket */}
-        <div style={{ margin: "10px 0 16px", padding: "0 2px" }}>
-          <button
-            className="btn btn-primary"
-            style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--radius-md)", fontSize: "13px" }}
-            onClick={() => navigate("/tickets/new")}
-          >
-            <PlusCircle size={15} />
-            <span>Raise New Ticket</span>
-          </button>
-        </div>
+        {/* Action Button: Quick Raise Ticket (Customers Only) */}
+        {user?.role === "customer" && (
+          <div style={{ margin: "10px 0 16px", padding: "0 2px" }}>
+            <button
+              className="btn btn-primary"
+              style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--radius-md)", fontSize: "13px" }}
+              onClick={() => navigate("/tickets/new")}
+            >
+              <PlusCircle size={15} />
+              <span>Raise New Ticket</span>
+            </button>
+          </div>
+        )}
 
         {/* Account Section */}
         <span style={{ fontSize: "10.5px", fontWeight: 800, color: "var(--text-muted)", paddingLeft: "8px", marginBottom: "4px", letterSpacing: "0.5px" }}>
