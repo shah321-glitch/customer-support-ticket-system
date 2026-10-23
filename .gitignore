@@ -32,3 +32,10 @@ npm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# System & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
