@@ -17,11 +17,16 @@ import {
   Shield,
   MessageSquare,
   Sparkles,
-  Star
+  Star,
+  Download,
+  FileText,
+  Eye,
+  X,
+  Maximize2
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
-import { api, BACKEND_URL, getAttachmentUrl } from "../api";
+import { api, BACKEND_URL, getAttachmentUrl, attachmentToBlobUrl, downloadAttachmentFile } from "../api";
 
 const TicketDetailPage = () => {
   const { id } = useParams();
@@ -41,6 +46,10 @@ const TicketDetailPage = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState("");
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const [showImageLightbox, setShowImageLightbox] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState("");
 
   const handleSubmitFeedback = async (e) => {
     e.preventDefault();
@@ -249,50 +258,180 @@ const TicketDetailPage = () => {
             </p>
 
             {/* Attached File Preview */}
-            {ticket.attachment?.url && (
-              <div
-                style={{
-                  marginTop: "20px",
-                  padding: "16px",
-                  background: "var(--bg-input)",
-                  border: "1px solid var(--border-color)",
-                  borderRadius: "var(--radius-md)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Paperclip size={16} color="var(--accent-teal)" />
-                    <span style={{ fontSize: "13px", fontWeight: 600 }}>
-                      Attachment: {ticket.attachment.originalname || ticket.attachment.filename}
-                    </span>
-                  </div>
-                  <a
-                    href={getAttachmentUrl(ticket.attachment.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-secondary btn-sm"
-                    style={{ fontSize: "11px", padding: "4px 10px" }}
-                  >
-                    <ExternalLink size={12} />
-                    <span>View Full Size</span>
-                  </a>
-                </div>
+            {ticket.attachment && (ticket.attachment.url || ticket.attachment.filename) && (() => {
+              const attach = ticket.attachment;
+              const isPdf =
+                attach.mimetype === "application/pdf" ||
+                attach.originalname?.toLowerCase().endsWith(".pdf") ||
+                attach.url?.startsWith("data:application/pdf");
+              const isImage =
+                !isPdf &&
+                (attach.mimetype?.startsWith("image/") ||
+                  attach.url?.startsWith("data:image/") ||
+                  /\.(png|jpe?g|gif|webp|svg)$/i.test(attach.originalname || attach.filename || ""));
 
-                {ticket.attachment.mimetype?.startsWith("image/") || ticket.attachment.url?.startsWith("data:image/") ? (
-                  <div style={{ marginTop: "10px", borderRadius: "8px", overflow: "hidden", maxHeight: "280px" }}>
-                    <img
-                      src={getAttachmentUrl(ticket.attachment.url)}
-                      alt="Attachment Preview"
-                      style={{ maxWidth: "100%", maxHeight: "280px", objectFit: "contain", borderRadius: "8px", background: "#000" }}
-                    />
+              const fileSizeKb = attach.size ? (attach.size / 1024).toFixed(1) + " KB" : "";
+
+              return (
+                <div
+                  style={{
+                    marginTop: "20px",
+                    padding: "16px 18px",
+                    background: "var(--bg-input)",
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "var(--radius-md)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      {isPdf ? (
+                        <FileText size={20} color="#ef4444" />
+                      ) : (
+                        <Paperclip size={18} color="var(--accent-teal)" />
+                      )}
+                      <div>
+                        <div style={{ fontSize: "13.5px", fontWeight: 700, color: "var(--text-primary)" }}>
+                          {attach.originalname || attach.filename}
+                        </div>
+                        {fileSizeKb && (
+                          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                            Size: {fileSizeKb} • {isPdf ? "PDF Document" : isImage ? "Image File" : "Attachment"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      {isPdf && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const bUrl = attachmentToBlobUrl(attach.url, "application/pdf");
+                            setPdfBlobUrl(bUrl);
+                            setShowPdfModal(true);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}
+                        >
+                          <Eye size={13} />
+                          <span>Preview PDF</span>
+                        </button>
+                      )}
+                      {isImage && !imgError && (
+                        <button
+                          type="button"
+                          onClick={() => setShowImageLightbox(true)}
+                          className="btn btn-secondary btn-sm"
+                          style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}
+                        >
+                          <Maximize2 size={13} />
+                          <span>View Full Size</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => downloadAttachmentFile(attach)}
+                        className="btn btn-primary btn-sm"
+                        style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}
+                      >
+                        <Download size={13} />
+                        <span>Download</span>
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                    Document file available for download via link above.
-                  </p>
-                )}
-              </div>
-            )}
+
+                  {/* Image Preview Rendering */}
+                  {isImage && (
+                    <div style={{ marginTop: "12px" }}>
+                      {imgError ? (
+                        <div
+                          style={{
+                            padding: "16px",
+                            background: "rgba(239, 68, 68, 0.08)",
+                            border: "1px dashed rgba(239, 68, 68, 0.3)",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#f87171", fontSize: "12.5px" }}>
+                            <AlertCircle size={16} />
+                            <span>Preview could not be rendered directly. Please use the download button to view the file.</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => downloadAttachmentFile(attach)}
+                            className="btn btn-secondary btn-sm"
+                          >
+                            <Download size={12} />
+                            <span>Download</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => setShowImageLightbox(true)}
+                          style={{
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            maxHeight: "360px",
+                            display: "flex",
+                            justifyContent: "center",
+                            background: "rgba(0,0,0,0.25)",
+                            padding: "10px",
+                            border: "1px solid var(--border-color)",
+                            cursor: "zoom-in",
+                            position: "relative",
+                          }}
+                          title="Click to zoom / view full size"
+                        >
+                          <img
+                            src={getAttachmentUrl(attach.url)}
+                            alt={attach.originalname || "Attachment"}
+                            onError={() => setImgError(true)}
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "340px",
+                              objectFit: "contain",
+                              borderRadius: "6px",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* PDF Document Notice */}
+                  {isPdf && (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        padding: "12px 14px",
+                        background: "rgba(239, 68, 68, 0.06)",
+                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+                        📄 PDF document attached by customer. Click <strong>Preview PDF</strong> to inspect inline or <strong>Download</strong> to save.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* 5-Star Customer Resolution Feedback */}
@@ -673,6 +812,166 @@ const TicketDetailPage = () => {
                 {deleting ? "Deleting..." : "Permanently Delete"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Lightbox Modal */}
+      {showImageLightbox && ticket?.attachment && (
+        <div
+          onClick={() => setShowImageLightbox(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(6px)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "92vw",
+              maxHeight: "92vh",
+              display: "flex",
+              flexDirection: "column",
+              background: "var(--bg-card)",
+              borderRadius: "12px",
+              overflow: "hidden",
+              border: "1px solid var(--border-color)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 18px",
+                background: "var(--bg-input)",
+                borderBottom: "1px solid var(--border-color)",
+              }}
+            >
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)" }}>
+                {ticket.attachment.originalname || ticket.attachment.filename}
+              </span>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => downloadAttachmentFile(ticket.attachment)}
+                  className="btn btn-primary btn-sm"
+                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Download size={13} />
+                  <span>Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowImageLightbox(false)}
+                  className="btn btn-secondary btn-sm"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+            <div
+              style={{
+                padding: "16px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                background: "#050711",
+                overflow: "auto",
+              }}
+            >
+              <img
+                src={getAttachmentUrl(ticket.attachment.url)}
+                alt="Full preview"
+                style={{
+                  maxWidth: "88vw",
+                  maxHeight: "75vh",
+                  objectFit: "contain",
+                  borderRadius: "6px",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Viewer Modal */}
+      {showPdfModal && (
+        <div
+          onClick={() => setShowPdfModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(6px)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "88vw",
+              maxWidth: "1000px",
+              height: "85vh",
+              background: "var(--bg-card)",
+              borderRadius: "12px",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              border: "1px solid var(--border-color)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 18px",
+                background: "var(--bg-input)",
+                borderBottom: "1px solid var(--border-color)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <FileText size={18} color="#ef4444" />
+                <span style={{ fontSize: "14px", fontWeight: 700 }}>
+                  PDF Preview: {ticket.attachment?.originalname || "Document"}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => downloadAttachmentFile(ticket.attachment)}
+                  className="btn btn-primary btn-sm"
+                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <Download size={13} />
+                  <span>Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPdfModal(false)}
+                  className="btn btn-secondary btn-sm"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+            <iframe
+              src={pdfBlobUrl}
+              title="PDF Preview"
+              style={{ flex: 1, width: "100%", height: "100%", border: "none" }}
+            />
           </div>
         </div>
       )}

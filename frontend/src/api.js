@@ -11,6 +11,60 @@ export const getAttachmentUrl = (url) => {
   return `${BACKEND_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
+// Convert Data URI to Blob URL so modern browsers allow opening & downloading without security block
+export const attachmentToBlobUrl = (dataUrl, mimetype) => {
+  if (!dataUrl) return "";
+  if (!dataUrl.startsWith("data:")) return dataUrl;
+  try {
+    const parts = dataUrl.split(";base64,");
+    if (parts.length < 2) return dataUrl;
+    const mime = parts[0].replace("data:", "") || mimetype || "application/octet-stream";
+    const byteCharacters = atob(parts[1]);
+    const byteArrays = [];
+    for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+      const slice = byteCharacters.slice(offset, offset + 1024);
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      byteArrays.push(new Uint8Array(byteNumbers));
+    }
+    const blob = new Blob(byteArrays, { type: mime });
+    return URL.createObjectURL(blob);
+  } catch (err) {
+    console.warn("Failed to convert data URI to blob:", err);
+    return dataUrl;
+  }
+};
+
+// Safe download trigger for any attachment (image, pdf, document)
+export const downloadAttachmentFile = (attachment) => {
+  if (!attachment || !attachment.url) return;
+  const filename = attachment.originalname || attachment.filename || "attachment";
+
+  if (attachment.url.startsWith("data:")) {
+    const blobUrl = attachmentToBlobUrl(attachment.url, attachment.mimetype);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => {
+      if (blobUrl.startsWith("blob:")) URL.revokeObjectURL(blobUrl);
+    }, 60000);
+  } else {
+    const fullUrl = getAttachmentUrl(attachment.url);
+    const a = document.createElement("a");
+    a.href = fullUrl;
+    a.download = filename;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+};
+
 let pendingStatsPromise = null;
 let cachedStats = null;
 let lastStatsFetchTime = 0;

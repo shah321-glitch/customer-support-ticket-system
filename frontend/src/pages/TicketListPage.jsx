@@ -368,9 +368,15 @@ const TicketListPage = () => {
             }}
           >
             <Inbox size={42} color="var(--text-muted)" />
-            <h3 style={{ fontSize: "16px", fontWeight: 700 }}>No tickets found matching your criteria</h3>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)", maxWidth: "380px" }}>
-              Try adjusting your search terms, status filters, or create a brand new ticket.
+            <h3 style={{ fontSize: "16px", fontWeight: 700 }}>
+              {user?.role === "agent"
+                ? "No tickets currently assigned to you"
+                : "No tickets found matching your criteria"}
+            </h3>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", maxWidth: "420px" }}>
+              {user?.role === "agent"
+                ? "When an administrator assigns customer support tickets to your account, they will automatically appear in this triage queue."
+                : "Try adjusting your search terms, status filters, or clear existing filters."}
             </p>
             {user?.role === "customer" ? (
               <button
@@ -419,8 +425,8 @@ const TicketListPage = () => {
                         <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>
                           {t.title}
                         </span>
-                        {t.attachment?.url && (
-                          <span title="Attachment included">
+                        {(t.attachment?.filename || t.attachment?.originalname || t.attachment?.url) && (
+                          <span title={`Attachment: ${t.attachment.originalname || t.attachment.filename || "file"}`}>
                             <Paperclip size={13} color="var(--accent-teal)" />
                           </span>
                         )}

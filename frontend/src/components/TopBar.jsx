@@ -18,8 +18,12 @@ const TopBar = ({ searchQuery = "", onSearchChange }) => {
     }
     if (path === "/tickets") {
       return {
-        title: "Support Ticket Queue",
-        subtitle: "Review, filter, and triage customer requests",
+        title: user?.role === "agent" ? "My Assigned Tickets" : "Support Ticket Queue",
+        subtitle: user?.role === "agent"
+          ? "Viewing tickets assigned to you by administrator"
+          : user?.role === "customer"
+          ? "Track and manage your submitted support requests"
+          : "Review, filter, assign, and triage customer requests",
       };
     }
     if (path === "/tickets/new") {

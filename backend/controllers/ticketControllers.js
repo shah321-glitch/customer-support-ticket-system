@@ -60,16 +60,18 @@ const createTicket = async (req, res) => {
   }
 };
 
-// @desc    Get all tickets (Customer gets own, Agent/Admin gets all)
+// @desc    Get all tickets (Customer gets own, Agent gets assigned, Admin gets all)
 // @route   GET /api/tickets
 // @access  Private
 const getTickets = async (req, res) => {
   try {
     let query = {};
 
-    // Customer only sees their tickets
+    // Role-based visibility
     if (req.user.role === "customer") {
       query.createdBy = req.user._id;
+    } else if (req.user.role === "agent") {
+      query.assignedTo = req.user._id;
     }
 
     // Optional query filters
@@ -95,6 +97,7 @@ const getTickets = async (req, res) => {
     const total = await Ticket.countDocuments(query);
 
     const tickets = await Ticket.find(query)
+      .select("-attachment.url") // Exclude heavy base64 url from list queries to keep payload lightweight
       .populate("createdBy", "name email role")
       .populate("assignedTo", "name email role")
       .populate("comments.sender", "name email role")
@@ -123,9 +126,11 @@ const getStats = async (req, res) => {
   try {
     const matchStage = {};
 
-    // Customer only sees their own ticket stats
+    // Customer only sees their own ticket stats; Agent only sees assigned ticket stats
     if (req.user.role === "customer") {
       matchStage.createdBy = req.user._id;
+    } else if (req.user.role === "agent") {
+      matchStage.assignedTo = req.user._id;
     }
 
     const [statusCounts, byCategory, byPriority] = await Promise.all([
@@ -198,6 +203,10 @@ const getTicketById = async (req, res) => {
     if (req.user.role === "customer" && ticket.createdBy._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to view this ticket" });
     }
+    // Agent can only view tickets assigned to them by admin
+    if (req.user.role === "agent" && (!ticket.assignedTo || ticket.assignedTo._id.toString() !== req.user._id.toString())) {
+      return res.status(403).json({ message: "Access denied. You can only view tickets assigned to you by an administrator." });
+    }
 
     res.json(ticket);
   } catch (error) {
@@ -232,8 +241,19 @@ const updateTicket = async (req, res) => {
       ticket.title = body.title || ticket.title;
       ticket.description = body.description || ticket.description;
       ticket.category = body.category || ticket.category;
+    } else if (req.user.role === "agent") {
+      // Agent can ONLY update tickets assigned to them
+      if (!ticket.assignedTo || ticket.assignedTo.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: "Access denied. You can only update tickets assigned to you." });
+      }
+      // Only Admin can assign/reassign tickets
+      if (body.assignedTo !== undefined && body.assignedTo !== ticket.assignedTo.toString()) {
+        return res.status(403).json({ message: "Only administrators can assign or reassign tickets." });
+      }
+      if (body.status) ticket.status = body.status;
+      if (body.priority) ticket.priority = body.priority;
     } else {
-      // Agent or Admin can update status, priority, and assign agent
+      // Admin has full control (update status, priority, category, title, description, and assign agent)
       if (body.title) ticket.title = body.title;
       if (body.description) ticket.description = body.description;
       if (body.category) ticket.category = body.category;
@@ -281,6 +301,10 @@ const addComment = async (req, res) => {
     // Customers can only comment on their own tickets
     if (req.user.role === "customer" && ticket.createdBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to reply to this ticket" });
+    }
+    // Agents can only comment on tickets assigned to them
+    if (req.user.role === "agent" && (!ticket.assignedTo || ticket.assignedTo.toString() !== req.user._id.toString())) {
+      return res.status(403).json({ message: "Access denied. You can only comment on tickets assigned to you." });
     }
 
     const comment = {

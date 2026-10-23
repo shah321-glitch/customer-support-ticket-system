@@ -244,7 +244,7 @@ const DashboardPage = () => {
                         <span style={{ fontWeight: 700, color: "var(--text-primary)" }}>
                           {t.title}
                         </span>
-                        {t.attachment?.url && (
+                        {(t.attachment?.filename || t.attachment?.originalname || t.attachment?.url) && (
                           <span title="File attached">
                             <Paperclip size={13} color="var(--accent-teal)" />
                           </span>
