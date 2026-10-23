@@ -117,15 +117,17 @@ const TopBar = ({ searchQuery = "", onSearchChange }) => {
           />
         </div>
 
-        {/* Raise Ticket Button */}
-        <button
-          className="btn btn-primary"
-          onClick={() => navigate("/tickets/new")}
-          style={{ height: "40px", padding: "0 18px" }}
-        >
-          <PlusCircle size={16} />
-          <span>New Ticket</span>
-        </button>
+        {/* Raise Ticket Button (Only for Customers) */}
+        {user?.role === "customer" && (
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate("/tickets/new")}
+            style={{ height: "40px", padding: "0 18px" }}
+          >
+            <PlusCircle size={16} />
+            <span>New Ticket</span>
+          </button>
+        )}
       </div>
     </header>
   );

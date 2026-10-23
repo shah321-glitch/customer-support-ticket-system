@@ -3,6 +3,18 @@ const cleanUrl = rawUrl.replace(/\/+$/, "");
 export const API_BASE = cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
 export const BACKEND_URL = API_BASE.replace(/\/api\/?$/, "");
 
+export const getAttachmentUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return `${BACKEND_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
+let pendingStatsPromise = null;
+let cachedStats = null;
+let lastStatsFetchTime = 0;
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return {
@@ -155,12 +167,28 @@ export const api = {
     return data;
   },
 
-  getStats: async () => {
-    const res = await fetch(`${API_BASE}/stats`, {
-      headers: getAuthHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to fetch stats");
-    return data;
+  getStats: async (force = false) => {
+    const now = Date.now();
+    if (!force && cachedStats && now - lastStatsFetchTime < 4000) {
+      return cachedStats;
+    }
+    if (pendingStatsPromise) {
+      return pendingStatsPromise;
+    }
+    pendingStatsPromise = (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/stats`, {
+          headers: getAuthHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to fetch stats");
+        cachedStats = data;
+        lastStatsFetchTime = Date.now();
+        return data;
+      } finally {
+        pendingStatsPromise = null;
+      }
+    })();
+    return pendingStatsPromise;
   },
 };

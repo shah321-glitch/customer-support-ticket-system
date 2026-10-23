@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
-import { api, BACKEND_URL } from "../api";
+import { api, BACKEND_URL, getAttachmentUrl } from "../api";
 
 const TicketDetailPage = () => {
   const { id } = useParams();
@@ -267,7 +267,7 @@ const TicketDetailPage = () => {
                     </span>
                   </div>
                   <a
-                    href={`${BACKEND_URL}${ticket.attachment.url}`}
+                    href={getAttachmentUrl(ticket.attachment.url)}
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn-secondary btn-sm"
@@ -278,10 +278,10 @@ const TicketDetailPage = () => {
                   </a>
                 </div>
 
-                {ticket.attachment.mimetype?.startsWith("image/") ? (
+                {ticket.attachment.mimetype?.startsWith("image/") || ticket.attachment.url?.startsWith("data:image/") ? (
                   <div style={{ marginTop: "10px", borderRadius: "8px", overflow: "hidden", maxHeight: "280px" }}>
                     <img
-                      src={`${BACKEND_URL}${ticket.attachment.url}`}
+                      src={getAttachmentUrl(ticket.attachment.url)}
                       alt="Attachment Preview"
                       style={{ maxWidth: "100%", maxHeight: "280px", objectFit: "contain", borderRadius: "8px", background: "#000" }}
                     />

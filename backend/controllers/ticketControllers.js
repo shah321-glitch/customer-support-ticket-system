@@ -3,9 +3,16 @@ const { sendEmailNotification } = require("../utils/emailService");
 
 // @desc    Create a new ticket
 // @route   POST /api/tickets
-// @access  Private (All authenticated users)
+// @access  Private (Customers only)
 const createTicket = async (req, res) => {
   try {
+    // Role check: Only customers have the privilege to create tickets
+    if (req.user.role !== "customer") {
+      return res.status(403).json({
+        message: "Access denied. Only customers are permitted to create support tickets. Agents and administrators manage existing tickets.",
+      });
+    }
+
     if (!req.body) {
       return res.status(400).json({ message: "Request body is missing" });
     }
@@ -24,14 +31,15 @@ const createTicket = async (req, res) => {
       comments: [],
     };
 
-    // Handle file upload
+    // Handle file upload (Base64 data URI for 100% serverless persistence)
     if (req.file) {
+      const base64Data = req.file.buffer.toString("base64");
       ticketData.attachment = {
-        filename: req.file.filename,
+        filename: req.file.originalname,
         originalname: req.file.originalname,
         mimetype: req.file.mimetype,
         size: req.file.size,
-        url: `/uploads/${req.file.filename}`,
+        url: `data:${req.file.mimetype};base64,${base64Data}`,
       };
     }
 

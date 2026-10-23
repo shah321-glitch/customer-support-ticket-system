@@ -49,11 +49,11 @@ function App() {
               }
             />
 
-            {/* Create Ticket: Dedicated form with validation and file upload */}
+            {/* Create Ticket: Dedicated form for Customers only */}
             <Route
               path="tickets/new"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["customer"]}>
                   <CreateTicketPage />
                 </ProtectedRoute>
               }

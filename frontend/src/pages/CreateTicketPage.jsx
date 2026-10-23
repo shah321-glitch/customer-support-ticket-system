@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -10,14 +10,22 @@ import {
   ShieldAlert, 
   Clock, 
   HelpCircle,
-  Sparkles
+  Sparkles,
+  Ticket
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api";
 
 const CreateTicketPage = () => {
-  const { showToast } = useAuth();
+  const { user, showToast } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && user.role !== "customer") {
+      showToast("Access restricted: Only customers can create support tickets.", "info");
+      navigate("/tickets", { replace: true });
+    }
+  }, [user, navigate]);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -104,6 +112,26 @@ const CreateTicketPage = () => {
       setLoading(false);
     }
   };
+
+  if (user && user.role !== "customer") {
+    return (
+      <div style={{ maxWidth: "600px", margin: "60px auto", textAlign: "center", padding: "36px 28px" }} className="card-panel">
+        <ShieldAlert size={48} color="var(--accent-teal)" style={{ marginBottom: "16px" }} />
+        <h2 style={{ fontSize: "20px", fontWeight: 800 }}>Customer Only Action</h2>
+        <p style={{ color: "var(--text-muted)", marginTop: "10px", fontSize: "14px", lineHeight: "1.6" }}>
+          Only customers have the right to create support tickets. As an <strong>{user.role === "admin" ? "Administrator" : "Support Agent"}</strong>, your role is to review, troubleshoot, and manage customer tickets.
+        </p>
+        <button
+          onClick={() => navigate("/tickets")}
+          className="btn btn-primary"
+          style={{ marginTop: "24px" }}
+        >
+          <Ticket size={16} />
+          <span>Go to Ticket Queue</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: "1050px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>

@@ -11,7 +11,8 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Ticket
 } from "lucide-react";
 import MetricCards from "../components/MetricCards";
 import DashboardCharts from "../components/DashboardCharts";
@@ -28,10 +29,10 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (force = false) => {
     try {
       const [statsRes, ticketsRes] = await Promise.all([
-        api.getStats().catch(() => null),
+        api.getStats(force).catch(() => null),
         api.getTickets({}, 1, 5).catch(() => ({ tickets: [] })),
       ]);
 
@@ -55,7 +56,7 @@ const DashboardPage = () => {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchDashboardData();
+    fetchDashboardData(true);
   };
 
   const getPriorityClass = (priority) => {
@@ -134,13 +135,15 @@ const DashboardPage = () => {
             <RefreshCw size={14} className={refreshing ? "spin" : ""} />
             <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => navigate("/tickets/new")}
-          >
-            <PlusCircle size={14} />
-            <span>Create Ticket</span>
-          </button>
+          {user?.role === "customer" && (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => navigate("/tickets/new")}
+            >
+              <PlusCircle size={14} />
+              <span>Create Ticket</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -195,14 +198,25 @@ const DashboardPage = () => {
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>
               Great job! All issues are addressed or no new tickets have been logged.
             </p>
-            <button
-              onClick={() => navigate("/tickets/new")}
-              className="btn btn-primary btn-sm"
-              style={{ marginTop: "16px" }}
-            >
-              <PlusCircle size={14} />
-              <span>Raise First Ticket</span>
-            </button>
+            {user?.role === "customer" ? (
+              <button
+                onClick={() => navigate("/tickets/new")}
+                className="btn btn-primary btn-sm"
+                style={{ marginTop: "16px" }}
+              >
+                <PlusCircle size={14} />
+                <span>Raise First Ticket</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/tickets")}
+                className="btn btn-primary btn-sm"
+                style={{ marginTop: "16px" }}
+              >
+                <Ticket size={14} />
+                <span>View Ticket Queue</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="saas-table-container">

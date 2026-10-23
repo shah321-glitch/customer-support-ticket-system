@@ -23,7 +23,9 @@ const Sidebar = ({ openTicketCount = 0 }) => {
   const corePages = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/tickets", label: "Ticket Queue", icon: Ticket, badge: openTicketCount },
-    { to: "/tickets/new", label: "Create Ticket", icon: PlusCircle },
+    ...(user?.role === "customer"
+      ? [{ to: "/tickets/new", label: "Create Ticket", icon: PlusCircle }]
+      : []),
     { to: "/knowledge", label: "Knowledge Base", icon: LifeBuoy },
   ];
 

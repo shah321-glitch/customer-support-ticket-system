@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Inbox,
   Download,
-  Star
+  Star,
+  RotateCcw
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
@@ -336,14 +337,16 @@ const TicketListPage = () => {
             <span>Export CSV</span>
           </button>
 
-          <button
-            onClick={() => navigate("/tickets/new")}
-            className="btn btn-primary"
-            style={{ height: "38px", padding: "0 16px" }}
-          >
-            <PlusCircle size={15} />
-            <span>New Ticket</span>
-          </button>
+          {user?.role === "customer" && (
+            <button
+              onClick={() => navigate("/tickets/new")}
+              className="btn btn-primary"
+              style={{ height: "38px", padding: "0 16px" }}
+            >
+              <PlusCircle size={15} />
+              <span>New Ticket</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -369,14 +372,25 @@ const TicketListPage = () => {
             <p style={{ fontSize: "13px", color: "var(--text-muted)", maxWidth: "380px" }}>
               Try adjusting your search terms, status filters, or create a brand new ticket.
             </p>
-            <button
-              onClick={() => navigate("/tickets/new")}
-              className="btn btn-primary btn-sm"
-              style={{ marginTop: "10px" }}
-            >
-              <PlusCircle size={14} />
-              <span>Submit a Ticket</span>
-            </button>
+            {user?.role === "customer" ? (
+              <button
+                onClick={() => navigate("/tickets/new")}
+                className="btn btn-primary btn-sm"
+                style={{ marginTop: "10px" }}
+              >
+                <PlusCircle size={14} />
+                <span>Submit a Ticket</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleClearFilters}
+                className="btn btn-secondary btn-sm"
+                style={{ marginTop: "10px" }}
+              >
+                <RotateCcw size={14} />
+                <span>Reset Filters</span>
+              </button>
+            )}
           </div>
         ) : (
           <div className="saas-table-container" style={{ border: "none", borderRadius: 0 }}>
