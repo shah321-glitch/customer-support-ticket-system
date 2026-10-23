@@ -10,16 +10,25 @@ const Layout = () => {
   const { toast, isAuthenticated } = useAuth();
   const [openCount, setOpenCount] = useState(0);
 
-  useEffect(() => {
+  const applyUnresolvedCount = (data) => {
+    if (!data) return;
+    const unresolved =
+      typeof data.unresolved === "number"
+        ? data.unresolved
+        : (data.open || 0) + (data.inProgress || 0);
+    setOpenCount(unresolved);
+  };
+
+  const refreshOpenCount = () => {
     if (isAuthenticated) {
-      api.getStats()
-        .then((data) => {
-          if (data && typeof data.open === "number") {
-            setOpenCount(data.open);
-          }
-        })
+      api.getStats(true)
+        .then(applyUnresolvedCount)
         .catch(() => {});
     }
+  };
+
+  useEffect(() => {
+    refreshOpenCount();
   }, [isAuthenticated]);
 
   return (
@@ -31,9 +40,7 @@ const Layout = () => {
       <div className="main-content-wrapper">
         <TopBar />
         <main style={{ padding: "28px", flex: 1, minHeight: 0 }}>
-          <Outlet context={{ refreshOpenCount: () => {
-            api.getStats().then(d => d && setOpenCount(d.open)).catch(() => {});
-          } }} />
+          <Outlet context={{ refreshOpenCount }} />
         </main>
       </div>
 

@@ -170,13 +170,19 @@ const getStats = async (req, res) => {
     });
 
     const total = (statusMap["Open"] || 0) + (statusMap["In Progress"] || 0) + (statusMap["Resolved"] || 0) + (statusMap["Closed"] || 0);
+    const open = statusMap["Open"] || 0;
+    const inProgress = statusMap["In Progress"] || 0;
+    const resolved = statusMap["Resolved"] || 0;
+    const closed = statusMap["Closed"] || 0;
+    const unresolved = open + inProgress;
 
     res.json({
       total,
-      open: statusMap["Open"] || 0,
-      inProgress: statusMap["In Progress"] || 0,
-      resolved: statusMap["Resolved"] || 0,
-      closed: statusMap["Closed"] || 0,
+      open,
+      inProgress,
+      resolved,
+      closed,
+      unresolved,
       byCategory,
       byPriority,
     });
@@ -243,15 +249,20 @@ const updateTicket = async (req, res) => {
       ticket.category = body.category || ticket.category;
     } else if (req.user.role === "agent") {
       // Agent can ONLY update tickets assigned to them
-      if (!ticket.assignedTo || ticket.assignedTo.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: "Access denied. You can only update tickets assigned to you." });
+      const isAssigned =
+        ticket.assignedTo &&
+        ticket.assignedTo.toString() === req.user._id.toString();
+
+      if (!isAssigned) {
+        return res.status(403).json({
+          message: "Access denied. You can only update tickets assigned to you by an administrator.",
+        });
       }
-      // Only Admin can assign/reassign tickets
-      if (body.assignedTo !== undefined && body.assignedTo !== ticket.assignedTo.toString()) {
-        return res.status(403).json({ message: "Only administrators can assign or reassign tickets." });
+
+      // Agents are only allowed to update the status of the ticket
+      if (body.status) {
+        ticket.status = body.status;
       }
-      if (body.status) ticket.status = body.status;
-      if (body.priority) ticket.priority = body.priority;
     } else {
       // Admin has full control (update status, priority, category, title, description, and assign agent)
       if (body.title) ticket.title = body.title;
@@ -404,9 +415,9 @@ const submitFeedback = async (req, res) => {
       return res.status(404).json({ message: "Ticket not found" });
     }
 
-    // Only ticket creator can rate (or admin testing)
-    if (ticket.createdBy.toString() !== req.user._id.toString() && req.user.role === "customer") {
-      return res.status(403).json({ message: "Only the customer who raised this ticket can submit feedback" });
+    // Only the customer who raised this ticket can submit rating/feedback
+    if (req.user.role !== "customer" || ticket.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied. Only the customer who raised this ticket can submit feedback and rating." });
     }
 
     // Check if ticket is resolved or closed

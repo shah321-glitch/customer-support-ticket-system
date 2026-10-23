@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useOutletContext } from "react-router-dom";
 import { 
   ArrowLeft, 
   Paperclip, 
@@ -32,6 +32,8 @@ const TicketDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, showToast } = useAuth();
+  const outletCtx = useOutletContext() || {};
+  const refreshOpenCount = outletCtx.refreshOpenCount;
 
   const [ticket, setTicket] = useState(null);
   const [agents, setAgents] = useState([]);
@@ -110,6 +112,7 @@ const TicketDetailPage = () => {
       const updated = await api.updateTicket(id, fields);
       setTicket(updated);
       showToast("Ticket updated successfully", "success");
+      if (refreshOpenCount) refreshOpenCount();
     } catch (err) {
       showToast(err.message || "Failed to update ticket", "error");
     } finally {
@@ -479,7 +482,7 @@ const TicketDetailPage = () => {
                     </p>
                   )}
                 </div>
-              ) : (
+              ) : user?.role === "customer" ? (
                 <form onSubmit={handleSubmitFeedback}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                     <h3 style={{ fontSize: "15px", fontWeight: 800, display: "flex", alignItems: "center", gap: "8px" }}>
@@ -545,6 +548,13 @@ const TicketDetailPage = () => {
                     </button>
                   </div>
                 </form>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <Sparkles size={16} color="var(--accent-teal)" />
+                  <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+                    Ticket marked as <strong>{ticket.status}</strong>. Awaiting customer feedback and star rating.
+                  </span>
+                </div>
               )}
             </div>
           )}
@@ -657,41 +667,66 @@ const TicketDetailPage = () => {
               TICKET CONTROLS
             </h3>
 
-            {/* Status Workflow Selector */}
-            <div style={{ marginBottom: "16px" }}>
-              <label className="form-label">Workflow Status</label>
-              <select
-                value={ticket.status}
-                disabled={!isStaff && ticket.status !== "Open"}
-                onChange={(e) => handleUpdateField({ status: e.target.value })}
-                className="form-input"
-                style={{ fontSize: "13px" }}
-              >
-                <option value="Open">Open</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Resolved">Resolved</option>
-                <option value="Closed">Closed</option>
-              </select>
-            </div>
+            {/* Status Workflow Selector - Visible to Agent and Admin */}
+            {(user?.role === "agent" || user?.role === "admin") && (
+              <div style={{ marginBottom: "16px" }}>
+                <label className="form-label">Workflow Status</label>
+                <select
+                  value={ticket.status}
+                  onChange={(e) => handleUpdateField({ status: e.target.value })}
+                  className="form-input"
+                  style={{ fontSize: "13px" }}
+                >
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+            )}
 
-            {/* Priority Selector */}
-            <div style={{ marginBottom: "16px" }}>
-              <label className="form-label">Priority</label>
-              <select
-                value={ticket.priority}
-                disabled={!isStaff}
-                onChange={(e) => handleUpdateField({ priority: e.target.value })}
-                className="form-input"
-                style={{ fontSize: "13px" }}
-              >
-                <option value="Low">Low Priority</option>
-                <option value="Medium">Medium Priority</option>
-                <option value="High">High Priority</option>
-              </select>
-            </div>
+            {/* Customer Ticket Status Action */}
+            {user?.role === "customer" && (
+              <div style={{ marginBottom: "16px" }}>
+                <label className="form-label">Ticket Status</label>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                  <span className={`badge ${getStatusClass(ticket.status)}`}>
+                    {ticket.status}
+                  </span>
+                  {ticket.status === "Open" && (
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateField({ status: "Closed" })}
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: "11px", padding: "4px 8px" }}
+                    >
+                      Close Issue
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
-            {/* Agent Assignee (Agent / Admin only) */}
-            {isStaff && (
+            {/* Priority Selector - ONLY FOR ADMINISTRATOR */}
+            {user?.role === "admin" && (
+              <div style={{ marginBottom: "16px" }}>
+                <label className="form-label">Priority Level</label>
+                <select
+                  value={ticket.priority}
+                  onChange={(e) => handleUpdateField({ priority: e.target.value })}
+                  className="form-input"
+                  style={{ fontSize: "13px" }}
+                >
+                  <option value="Low">Low Priority</option>
+                  <option value="Medium">Medium Priority</option>
+                  <option value="High">High Priority</option>
+                  <option value="Urgent">Urgent</option>
+                </select>
+              </div>
+            )}
+
+            {/* Assign Support Specialist - ONLY FOR ADMINISTRATOR */}
+            {user?.role === "admin" && (
               <div style={{ marginBottom: "16px" }}>
                 <label className="form-label">Assign Support Specialist</label>
                 <select
@@ -724,9 +759,23 @@ const TicketDetailPage = () => {
                 </p>
               </div>
               <div>
-                <span style={{ color: "var(--text-muted)" }}>Assigned To:</span>
+                <span style={{ color: "var(--text-muted)" }}>Priority:</span>
+                <div style={{ marginTop: "3px" }}>
+                  <span className={`badge ${getPriorityClass(ticket.priority)}`}>
+                    {ticket.priority} Priority
+                  </span>
+                </div>
+              </div>
+              <div>
+                <span style={{ color: "var(--text-muted)" }}>Category:</span>
+                <p style={{ fontWeight: 600, color: "var(--text-primary)", marginTop: "2px" }}>
+                  {ticket.category || "General"}
+                </p>
+              </div>
+              <div>
+                <span style={{ color: "var(--text-muted)" }}>Assigned Specialist:</span>
                 <p style={{ fontWeight: 600, color: "var(--accent-teal)", marginTop: "2px" }}>
-                  {ticket.assignedTo?.name || "Unassigned"}
+                  {ticket.assignedTo?.name ? `${ticket.assignedTo.name} (${ticket.assignedTo.email || "Agent"})` : "Unassigned"}
                 </p>
               </div>
               <div>
