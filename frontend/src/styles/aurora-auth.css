@@ -1,0 +1,780 @@
+/* ==========================================================================
+   MIDNIGHT AURORA - Authentication Theme Styles
+   Customer Support Ticket System ("ResolveDesk")
+   ========================================================================== */
+
+:root {
+  --aurora-bg-dark: #070a1a;
+  --aurora-bg-deep: #0b0f2a;
+  --aurora-violet: #7c3aed;
+  --aurora-pink: #ec4899;
+  --aurora-cyan: #22d3ee;
+  --aurora-accent-gradient: linear-gradient(135deg, #7c3aed 0%, #ec4899 50%, #22d3ee 100%);
+  --aurora-accent-gradient-hover: linear-gradient(135deg, #8b5cf6 0%, #f472b6 50%, #38bdf8 100%);
+  --aurora-text-primary: #ffffff;
+  --aurora-text-muted: #9aa4c7;
+  --aurora-text-dim: #6b779e;
+  --aurora-card-bg: rgba(255, 255, 255, 0.05);
+  --aurora-card-border: rgba(255, 255, 255, 0.12);
+  --aurora-card-border-active: rgba(124, 58, 237, 0.6);
+  --aurora-input-bg: rgba(11, 16, 42, 0.65);
+  --aurora-input-border: rgba(255, 255, 255, 0.1);
+  --aurora-radius-sm: 10px;
+  --aurora-radius-md: 14px;
+  --aurora-radius-lg: 24px;
+}
+
+/* Base Fullpage Aurora Container */
+.aurora-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  background: radial-gradient(circle at 50% 0%, var(--aurora-bg-deep) 0%, var(--aurora-bg-dark) 100%);
+  color: var(--aurora-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 18px;
+  overflow: hidden;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+/* Subtle Dot Grid Texture Overlay */
+.aurora-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Animated Aurora Gradient Blobs (3 Distinct Color Clouds) */
+.aurora-blobs-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.aurora-blob-violet {
+  width: 520px;
+  height: 520px;
+  background: var(--aurora-violet);
+  top: -100px;
+  left: 15%;
+  animation: auroraDrift1 26s ease-in-out infinite alternate;
+}
+
+.aurora-blob-pink {
+  width: 480px;
+  height: 480px;
+  background: var(--aurora-pink);
+  bottom: -60px;
+  right: 12%;
+  animation: auroraDrift2 24s ease-in-out infinite alternate;
+}
+
+.aurora-blob-cyan {
+  width: 440px;
+  height: 440px;
+  background: var(--aurora-cyan);
+  top: 40%;
+  right: 35%;
+  animation: auroraDrift3 28s ease-in-out infinite alternate;
+}
+
+@keyframes auroraDrift1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(120px, 80px) scale(1.15); }
+  100% { transform: translate(-60px, 140px) scale(0.9); }
+}
+
+@keyframes auroraDrift2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-100px, -90px) scale(1.2); }
+  100% { transform: translate(80px, -50px) scale(0.85); }
+}
+
+@keyframes auroraDrift3 {
+  0% { transform: translate(0, 0) scale(0.9); }
+  50% { transform: translate(-80px, 100px) scale(1.15); }
+  100% { transform: translate(110px, -80px) scale(1.05); }
+}
+
+/* Floating CSS Particles */
+.aurora-particles-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.aurora-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px 1px rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  animation: particleFloat 14s linear infinite;
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(105vh) scale(0.5);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.65;
+  }
+  85% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* Interactive 3D Perspective Card Wrapper */
+.aurora-card-perspective-frame {
+  perspective: 1200px;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Main Dark Glassmorphism Card */
+.aurora-card {
+  position: relative;
+  width: 100%;
+  background: var(--aurora-card-bg);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-radius: var(--aurora-radius-lg);
+  padding: 38px 34px;
+  box-shadow: 
+    0 24px 60px -10px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--aurora-card-border),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  box-sizing: border-box;
+  transform-style: preserve-3d;
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s ease;
+  animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cardEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Animated Rotating Conic Gradient Border Glow */
+.aurora-card-glow-border {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: calc(var(--aurora-radius-lg) + 1.5px);
+  padding: 1.5px;
+  background: conic-gradient(from 0deg, #7c3aed, #ec4899, #22d3ee, #7c3aed);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
+  animation: rotateConic 8s linear infinite;
+  z-index: 0;
+}
+
+@keyframes rotateConic {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* Dynamic Cursor Spotlight Effect inside Card */
+.aurora-card-spotlight {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--aurora-radius-lg);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(124, 58, 237, 0.15),
+    transparent 50%
+  );
+  z-index: 1;
+}
+
+.aurora-card:hover .aurora-card-spotlight {
+  opacity: 1;
+}
+
+/* Card Content Layer */
+.aurora-card-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Staggered Item Entrance Helpers */
+.stagger-item {
+  opacity: 0;
+  animation: staggerFadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-1 { animation-delay: 0.08s; }
+.stagger-2 { animation-delay: 0.16s; }
+.stagger-3 { animation-delay: 0.24s; }
+.stagger-4 { animation-delay: 0.32s; }
+.stagger-5 { animation-delay: 0.40s; }
+.stagger-6 { animation-delay: 0.48s; }
+.stagger-7 { animation-delay: 0.56s; }
+
+@keyframes staggerFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Logo Floating & Pulsing Glow */
+.aurora-logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.aurora-logo-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: var(--aurora-accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.5);
+  animation: logoFloat 4s ease-in-out infinite, logoPulseGlow 3s ease-in-out infinite;
+  transition: transform 0.25s ease;
+}
+
+.aurora-logo-badge:hover {
+  transform: scale(1.08) rotate(3deg);
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes logoPulseGlow {
+  0%, 100% {
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.45), 0 0 15px rgba(236, 72, 153, 0.3);
+  }
+  50% {
+    box-shadow: 0 14px 38px rgba(124, 58, 237, 0.7), 0 0 26px rgba(34, 211, 238, 0.5);
+  }
+}
+
+/* Gradient Heading */
+.aurora-heading {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  text-align: center;
+  margin-bottom: 6px;
+  background: linear-gradient(180deg, #ffffff 40%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.aurora-subtitle {
+  font-size: 13.5px;
+  color: var(--aurora-text-muted);
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* Input Fields & Floating Highlight Line */
+.aurora-field-group {
+  margin-bottom: 18px;
+  position: relative;
+}
+
+.aurora-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--aurora-text-muted);
+  margin-bottom: 7px;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.aurora-field-group:focus-within .aurora-label {
+  color: #c4b5fd;
+  transform: translateX(2px);
+}
+
+.aurora-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.aurora-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 46px 0 44px;
+  background: var(--aurora-input-bg);
+  border: 1px solid var(--aurora-input-border);
+  border-radius: var(--aurora-radius-md);
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.aurora-input::placeholder {
+  color: var(--aurora-text-dim);
+  font-size: 13.5px;
+}
+
+.aurora-input:focus {
+  border-color: rgba(124, 58, 237, 0.8);
+  background: rgba(15, 23, 60, 0.85);
+  box-shadow: 
+    0 0 0 3px rgba(124, 58, 237, 0.25),
+    0 0 22px rgba(124, 58, 237, 0.2),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Left Icon Highlight & Scale on Focus */
+.aurora-input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--aurora-text-muted);
+  pointer-events: none;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.aurora-field-group:focus-within .aurora-input-icon {
+  color: var(--aurora-cyan);
+  transform: scale(1.12);
+}
+
+/* Animated Underline on Focus */
+.aurora-input-line {
+  position: absolute;
+  bottom: 0;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: var(--aurora-accent-gradient);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.aurora-field-group:focus-within .aurora-input-line {
+  transform: scaleX(1);
+}
+
+/* Toggle Password Visibility Eye Button */
+.aurora-eye-toggle {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--aurora-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.aurora-eye-toggle:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+}
+
+/* Autofill Fix for Dark Background */
+.aurora-input:-webkit-autofill,
+.aurora-input:-webkit-autofill:hover,
+.aurora-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0b102a inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Password Strength Helper Bar */
+.password-strength-container {
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+.password-strength-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.password-strength-segment {
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.password-strength-text {
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Error Alert Box with Shake Animation */
+.aurora-alert-error {
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--aurora-radius-md);
+  color: #fca5a5;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  animation: alertShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes alertShake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* Interactive Role Selection Cards */
+.aurora-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.aurora-role-card {
+  position: relative;
+  padding: 14px 10px;
+  border-radius: var(--aurora-radius-md);
+  background: var(--aurora-input-bg);
+  border: 1px solid var(--aurora-input-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  outline: none;
+  color: var(--aurora-text-muted);
+}
+
+.aurora-role-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(124, 58, 237, 0.5);
+  background: rgba(20, 26, 60, 0.85);
+  box-shadow: 0 8px 22px rgba(124, 58, 237, 0.25);
+  color: #ffffff;
+}
+
+.aurora-role-card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.4);
+}
+
+.aurora-role-card.selected {
+  border-color: var(--aurora-violet);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.25) 0%, rgba(236, 72, 153, 0.12) 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  animation: rolePop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes rolePop {
+  0% { transform: scale(0.96); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.aurora-role-check-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--aurora-accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.6);
+  animation: badgeScaleIn 0.22s ease-out;
+}
+
+@keyframes badgeScaleIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.aurora-role-icon {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.aurora-role-card.selected .aurora-role-icon {
+  transform: scale(1.1);
+  color: var(--aurora-cyan);
+}
+
+.aurora-role-label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Submit Button with Gradient, Pulsing Glow, Sweep Shine & Ripple */
+.aurora-btn-submit {
+  width: 100%;
+  height: 54px;
+  border-radius: var(--aurora-radius-md);
+  border: none;
+  background: var(--aurora-accent-gradient);
+  background-size: 200% 200%;
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.45);
+  animation: buttonGlowPulse 4s ease-in-out infinite;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes buttonGlowPulse {
+  0%, 100% {
+    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.4);
+  }
+  50% {
+    box-shadow: 0 12px 34px rgba(236, 72, 153, 0.55), 0 0 18px rgba(34, 211, 238, 0.35);
+  }
+}
+
+.aurora-btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background-position: right center;
+  box-shadow: 0 14px 38px rgba(124, 58, 237, 0.65), 0 0 24px rgba(236, 72, 153, 0.4);
+}
+
+.aurora-btn-submit:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.aurora-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  animation: none;
+}
+
+/* Light Sweep Shine Passing on Hover */
+.aurora-btn-submit::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  pointer-events: none;
+  transition: none;
+}
+
+.aurora-btn-submit:hover::after {
+  animation: shineSweep 1.2s ease-in-out infinite;
+}
+
+@keyframes shineSweep {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* Button Click Ripple Effect */
+.aurora-btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  transform: scale(0);
+  animation: rippleAnimation 0.6s linear;
+  pointer-events: none;
+}
+
+@keyframes rippleAnimation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Spinner inside Button */
+.aurora-btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Quick 1-Click Demo Accounts Bar */
+.aurora-quick-demo-box {
+  background: rgba(11, 16, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--aurora-radius-md);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.aurora-quick-demo-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--aurora-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aurora-quick-demo-pill:hover {
+  border-color: var(--aurora-cyan);
+  color: #ffffff;
+  background: rgba(34, 211, 238, 0.15);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Footer Link with Animated Underline */
+.aurora-footer-switch {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13.5px;
+  color: var(--aurora-text-muted);
+}
+
+.aurora-footer-link {
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+  position: relative;
+  margin-left: 6px;
+  display: inline-block;
+}
+
+.aurora-footer-link::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background: var(--aurora-accent-gradient);
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.25s ease-out;
+}
+
+.aurora-footer-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* ==========================================================================
+   Responsive & Accessibility Adaptations
+   ========================================================================== */
+
+@media (max-width: 440px) {
+  .aurora-card {
+    padding: 28px 20px;
+  }
+  .aurora-roles-grid {
+    gap: 6px;
+  }
+  .aurora-role-card {
+    padding: 10px 6px;
+  }
+  .aurora-role-label {
+    font-size: 11px;
+  }
+}
+
+/* Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob,
+  .aurora-particle,
+  .aurora-card-glow-border,
+  .aurora-logo-badge,
+  .aurora-btn-submit {
+    animation: none !important;
+  }
+  .aurora-card {
+    transition: none !important;
+  }
+}
+

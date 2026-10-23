@@ -9,11 +9,12 @@ import {
   Eye, 
   EyeOff, 
   Layers, 
-  Shield, 
   Headphones, 
   Crown,
-  AlertCircle 
+  AlertCircle,
+  Check
 } from "lucide-react";
+import AuroraAuthWrapper from "../components/AuroraAuthWrapper";
 
 const RegisterPage = () => {
   const { register, isAuthenticated } = useAuth();
@@ -26,12 +27,38 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [ripples, setRipples] = useState([]);
 
   React.useEffect(() => {
     if (isAuthenticated) {
       navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  // Visual password strength calculator (does not block submission)
+  const calculatePasswordStrength = (pwd) => {
+    if (!pwd) return { score: 0, text: "", color: "transparent" };
+    let score = 0;
+    if (pwd.length >= 6) score += 1;
+    if (pwd.length >= 10 || /[A-Z]/.test(pwd)) score += 1;
+    if (/[0-9]/.test(pwd)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+
+    switch (score) {
+      case 1:
+        return { score: 1, text: "Weak", color: "#ef4444" };
+      case 2:
+        return { score: 2, text: "Fair", color: "#f97316" };
+      case 3:
+        return { score: 3, text: "Good", color: "#f59e0b" };
+      case 4:
+        return { score: 4, text: "Strong", color: "#10b981" };
+      default:
+        return { score: 0, text: "", color: "transparent" };
+    }
+  };
+
+  const strength = calculatePasswordStrength(password);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,6 +85,17 @@ const RegisterPage = () => {
     }
   };
 
+  const handleButtonClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const newRipple = { id: Date.now(), x, y };
+    setRipples((prev) => [...prev, newRipple]);
+    setTimeout(() => {
+      setRipples((prev) => prev.filter((r) => r.id !== newRipple.id));
+    }, 600);
+  };
+
   const roles = [
     { id: "customer", label: "Customer", icon: User, desc: "Submit tickets & get help" },
     { id: "agent", label: "Support Agent", icon: Headphones, desc: "Triage & resolve tickets" },
@@ -65,225 +103,218 @@ const RegisterPage = () => {
   ];
 
   return (
-    <div className="auth-page-container">
-      {/* Background glow decoration */}
-      <div
-        style={{
-          position: "absolute",
-          width: "450px",
-          height: "450px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, transparent 70%)",
-          top: "10%",
-          right: "15%",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          width: "450px",
-          height: "450px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%)",
-          bottom: "10%",
-          left: "15%",
-          pointerEvents: "none",
-        }}
-      />
+    <AuroraAuthWrapper>
+      {/* 1. Floating Logo with Accent Gradient */}
+      <div className="aurora-logo-container stagger-item stagger-1">
+        <div className="aurora-logo-badge">
+          <Layers size={28} color="#ffffff" />
+        </div>
+      </div>
 
-      <div className="auth-card" style={{ maxWidth: "520px" }}>
-        {/* Brand Header */}
-        <div style={{ textAlign: "center", marginBottom: "26px" }}>
-          <div
-            style={{
-              width: "50px",
-              height: "50px",
-              borderRadius: "14px",
-              background: "linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 6px 20px rgba(20, 184, 166, 0.4)",
-              marginBottom: "12px",
-            }}
-          >
-            <Layers size={26} color="#fff" />
+      {/* 2. Heading with Violet-to-White Text Gradient */}
+      <h1 className="aurora-heading stagger-item stagger-2">
+        Create Your Account
+      </h1>
+      <p className="aurora-subtitle stagger-item stagger-2">
+        Join ResolveDesk to manage your service requests
+      </p>
+
+      {/* 3. Validation / Error Feedback with Red Shake */}
+      {error && (
+        <div className="aurora-alert-error" role="alert">
+          <AlertCircle size={18} style={{ flexShrink: 0 }} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* 4. Registration Form */}
+      <form onSubmit={handleSubmit} noValidate>
+        {/* Full Name */}
+        <div className="aurora-field-group stagger-item stagger-3">
+          <label className="aurora-label" htmlFor="register-name">
+            Full Name
+          </label>
+          <div className="aurora-input-wrapper">
+            <User size={18} className="aurora-input-icon" />
+            <input
+              id="register-name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (error) setError("");
+              }}
+              placeholder="e.g. Rahul Sharma"
+              className="aurora-input"
+            />
+            <div className="aurora-input-line" />
           </div>
-          <h2 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px" }}>
-            Create Your Account
-          </h2>
-          <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Join ResolveDesk to manage your service requests
-          </p>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div
-            style={{
-              padding: "12px 14px",
-              background: "var(--danger-bg)",
-              border: "1px solid rgba(239, 68, 68, 0.4)",
-              borderRadius: "var(--radius-md)",
-              color: "#f87171",
-              fontSize: "13px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "18px",
-            }}
-          >
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{error}</span>
+        {/* Email Address */}
+        <div className="aurora-field-group stagger-item stagger-4">
+          <label className="aurora-label" htmlFor="register-email">
+            Email Address
+          </label>
+          <div className="aurora-input-wrapper">
+            <Mail size={18} className="aurora-input-icon" />
+            <input
+              id="register-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError("");
+              }}
+              placeholder="name@example.com"
+              className="aurora-input"
+            />
+            <div className="aurora-input-line" />
           </div>
-        )}
+        </div>
 
-        {/* Register Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Full Name */}
-          <div style={{ marginBottom: "16px" }}>
-            <label className="form-label">Full Name</label>
-            <div style={{ position: "relative" }}>
-              <User
-                size={16}
-                style={{ position: "absolute", left: "14px", top: "14px", color: "var(--text-muted)" }}
-              />
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Aman Verma"
-                className="form-input"
-                style={{ paddingLeft: "40px" }}
-              />
-            </div>
-          </div>
+        {/* Password */}
+        <div className="aurora-field-group stagger-item stagger-5">
+          <label className="aurora-label" htmlFor="register-password">
+            Password (Min 6 characters)
+          </label>
+          <div className="aurora-input-wrapper">
+            <Lock size={18} className="aurora-input-icon" />
+            <input
+              id="register-password"
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError("");
+              }}
+              placeholder="••••••••"
+              className="aurora-input"
+            />
+            <div className="aurora-input-line" />
 
-          {/* Email */}
-          <div style={{ marginBottom: "16px" }}>
-            <label className="form-label">Email Address</label>
-            <div style={{ position: "relative" }}>
-              <Mail
-                size={16}
-                style={{ position: "absolute", left: "14px", top: "14px", color: "var(--text-muted)" }}
-              />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="form-input"
-                style={{ paddingLeft: "40px" }}
-              />
-            </div>
+            <button
+              type="button"
+              className="aurora-eye-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
-          {/* Password */}
-          <div style={{ marginBottom: "18px" }}>
-            <label className="form-label">Password (Min 6 characters)</label>
-            <div style={{ position: "relative" }}>
-              <Lock
-                size={16}
-                style={{ position: "absolute", left: "14px", top: "14px", color: "var(--text-muted)" }}
-              />
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="form-input"
-                style={{ paddingLeft: "40px", paddingRight: "40px" }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "12px",
-                  top: "12px",
-                  background: "transparent",
-                  border: "none",
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                }}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Role Selection */}
-          <div style={{ marginBottom: "24px" }}>
-            <label className="form-label">Select Account Role</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-              {roles.map((r) => {
-                const Icon = r.icon;
-                const isSelected = role === r.id;
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setRole(r.id)}
+          {/* Visual Password Strength Bar */}
+          {password.length > 0 && (
+            <div className="password-strength-container">
+              <div className="password-strength-bars">
+                {[1, 2, 3, 4].map((seg) => (
+                  <div
+                    key={seg}
+                    className="password-strength-segment"
                     style={{
-                      padding: "12px 8px",
-                      borderRadius: "var(--radius-md)",
-                      border: isSelected ? "2px solid var(--accent-teal)" : "1px solid var(--border-color)",
-                      background: isSelected ? "var(--primary-light)" : "var(--bg-input)",
-                      color: isSelected ? "var(--accent-teal)" : "var(--text-secondary)",
-                      cursor: "pointer",
-                      textAlign: "center",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "6px",
-                      transition: "all 0.15s ease",
+                      background: strength.score >= seg ? strength.color : "rgba(255, 255, 255, 0.08)",
+                      boxShadow: strength.score >= seg ? `0 0 8px ${strength.color}` : "none",
                     }}
-                  >
-                    <Icon size={18} />
-                    <span style={{ fontSize: "12px", fontWeight: 700 }}>{r.label}</span>
-                  </button>
-                );
-              })}
+                  />
+                ))}
+              </div>
+              <div className="password-strength-text" style={{ color: strength.color }}>
+                <span>Security: {strength.text}</span>
+                <span style={{ fontSize: "10.5px", color: "var(--aurora-text-muted)" }}>
+                  {password.length < 6 ? "Minimum 6 chars needed" : "Valid length"}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Submit */}
+        {/* Role Selector (3 Equal Interactive Cards) */}
+        <div className="stagger-item stagger-6" style={{ marginBottom: "24px" }}>
+          <label className="aurora-label">Select Account Role</label>
+          <div className="aurora-roles-grid" role="radiogroup" aria-label="Account Role">
+            {roles.map((r) => {
+              const Icon = r.icon;
+              const isSelected = role === r.id;
+              return (
+                <div
+                  key={r.id}
+                  role="radio"
+                  aria-checked={isSelected}
+                  tabIndex={0}
+                  className={`aurora-role-card ${isSelected ? "selected" : ""}`}
+                  onClick={() => setRole(r.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setRole(r.id);
+                    }
+                  }}
+                >
+                  {/* Animated Corner Check Badge */}
+                  {isSelected && (
+                    <div className="aurora-role-check-badge">
+                      <Check size={11} color="#ffffff" strokeWidth={3} />
+                    </div>
+                  )}
+
+                  <Icon size={22} className="aurora-role-icon" />
+                  <span className="aurora-role-label">{r.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Submit Button with Continuous Glow, Sweep Shine, & Ripple */}
+        <div className="stagger-item stagger-7">
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary"
-            style={{ width: "100%", padding: "13px", fontSize: "14px", fontWeight: 700 }}
+            onClick={handleButtonClick}
+            className="aurora-btn-submit"
           >
+            {/* Click Ripple Elements */}
+            {ripples.map((rip) => (
+              <span
+                key={rip.id}
+                className="aurora-btn-ripple"
+                style={{
+                  left: rip.x - 20,
+                  top: rip.y - 20,
+                  width: 40,
+                  height: 40,
+                }}
+              />
+            ))}
+
             {loading ? (
-              <span>Creating account...</span>
+              <>
+                <div className="aurora-btn-spinner" />
+                <span>Creating account…</span>
+              </>
             ) : (
               <>
-                <UserPlus size={16} />
+                <UserPlus size={18} />
                 <span>Create ResolveDesk Account</span>
               </>
             )}
           </button>
-        </form>
-
-        {/* Footer switch to Login */}
-        <div style={{ textAlign: "center", marginTop: "24px", fontSize: "13px", color: "var(--text-secondary)" }}>
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            style={{ color: "var(--accent-teal)", fontWeight: 700, textDecoration: "none" }}
-          >
-            Sign in
-          </Link>
         </div>
+      </form>
+
+      {/* Footer Link with Animated Underline */}
+      <div className="aurora-footer-switch stagger-item stagger-7">
+        Already have an account?
+        <Link to="/login" className="aurora-footer-link">
+          Sign in
+        </Link>
       </div>
-    </div>
+    </AuroraAuthWrapper>
   );
 };
 
 export default RegisterPage;
-
