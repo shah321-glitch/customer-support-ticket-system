@@ -12,7 +12,7 @@ import {
   UserCheck,
   Paperclip
 } from "lucide-react";
-import { api } from "../api";
+import { api, BACKEND_URL } from "../api";
 
 const TicketDetailModal = ({ ticket, user, onClose, onTicketUpdated, agents = [], showToast }) => {
   const [currentTicket, setCurrentTicket] = useState(ticket);
@@ -333,13 +333,13 @@ const TicketDetailModal = ({ ticket, user, onClose, onTicketUpdated, agents = []
                   ATTACHED SCREENSHOT:
                 </span>
                 <a
-                  href={`http://localhost:5000${currentTicket.attachment.url}`}
+                  href={`${BACKEND_URL}${currentTicket.attachment.url}`}
                   target="_blank"
                   rel="noreferrer"
                   style={{ display: "inline-block", textDecoration: "none" }}
                 >
                   <img
-                    src={`http://localhost:5000${currentTicket.attachment.url}`}
+                    src={`${BACKEND_URL}${currentTicket.attachment.url}`}
                     alt={currentTicket.attachment.originalname || "Attachment"}
                     style={{
                       maxHeight: "220px",
