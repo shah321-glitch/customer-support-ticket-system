@@ -1,4 +1,8 @@
-const rawUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const rawUrl =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? "https://customer-support-ticket-system-back.vercel.app"
+    : "http://localhost:5000");
 const cleanUrl = rawUrl.replace(/\/+$/, "");
 export const API_BASE = cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
 export const BACKEND_URL = API_BASE.replace(/\/api\/?$/, "");
