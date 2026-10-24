@@ -1,8 +1,18 @@
 const path = require("path");
+const dns = require("dns");
 const mongoose = require("mongoose");
 require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 
+if (process.platform === "win32") {
+  try {
+    dns.setServers(["8.8.8.8", "8.8.4.4"]);
+  } catch (err) {
+    // ignore
+  }
+}
+
+const connectDB = require("../config/db");
 const Ticket = require("../models/Ticket");
 const { uploadToCloudinary } = require("../utils/cloudinary");
 
@@ -29,7 +39,7 @@ async function runMigration() {
 
   try {
     console.log("Connecting to MongoDB...");
-    await mongoose.connect(process.env.MONGO_URI);
+    await connectDB();
     console.log("✅ MongoDB Connected successfully.");
 
     // Find all tickets with base64 attachments
