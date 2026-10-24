@@ -41,6 +41,7 @@ const ticketSchema = new mongoose.Schema(
       mimetype: String,
       size: Number,
       url: String,
+      public_id: String,
     },
     comments: [commentSchema],
     feedback: feedbackSchema,

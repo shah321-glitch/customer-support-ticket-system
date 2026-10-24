@@ -1,6 +1,7 @@
 const Ticket = require("../models/Ticket");
 const User = require("../models/user");
 const { sendEmailNotification } = require("../utils/emailService");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../utils/cloudinary");
 
 // @desc    Create a new ticket
 // @route   POST /api/tickets
@@ -32,16 +33,39 @@ const createTicket = async (req, res) => {
       comments: [],
     };
 
-    // Handle file upload (Base64 data URI for 100% serverless persistence)
+    // Handle file upload with Cloudinary (no Base64 in MongoDB)
     if (req.file) {
-      const base64Data = req.file.buffer.toString("base64");
-      ticketData.attachment = {
-        filename: req.file.originalname,
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        url: `data:${req.file.mimetype};base64,${base64Data}`,
-      };
+      if (
+        process.env.CLOUDINARY_CLOUD_NAME &&
+        process.env.CLOUDINARY_API_KEY &&
+        process.env.CLOUDINARY_API_SECRET
+      ) {
+        try {
+          const uploadResult = await uploadToCloudinary(
+            req.file.buffer,
+            req.file.originalname,
+            "resolvedesk_tickets"
+          );
+          ticketData.attachment = {
+            filename: req.file.originalname,
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            url: uploadResult.url,
+            public_id: uploadResult.public_id,
+          };
+        } catch (uploadErr) {
+          console.error("Cloudinary upload failed:", uploadErr);
+          return res.status(500).json({
+            message: `Attachment upload to Cloudinary failed: ${uploadErr.message}`,
+          });
+        }
+      } else {
+        return res.status(500).json({
+          message:
+            "Cloudinary credentials not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in environment variables.",
+        });
+      }
     }
 
     const ticket = await Ticket.create(ticketData);
@@ -396,6 +420,11 @@ const deleteTicket = async (req, res) => {
 
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Not authorized: Only administrators can delete tickets" });
+    }
+
+    // Delete attachment from Cloudinary if public_id exists
+    if (ticket.attachment && ticket.attachment.public_id) {
+      await deleteFromCloudinary(ticket.attachment.public_id);
     }
 
     await ticket.deleteOne();
