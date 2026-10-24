@@ -15,7 +15,8 @@ import {
   Inbox,
   Download,
   Star,
-  RotateCcw
+  RotateCcw,
+  CheckCircle2
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
@@ -71,6 +72,16 @@ const TicketListPage = () => {
       showToast(err.message || "Failed to load tickets", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickResolve = async (ticketId) => {
+    try {
+      await api.updateTicket(ticketId, { status: "Resolved" });
+      showToast("Ticket marked as Resolved!", "success");
+      fetchTickets();
+    } catch (err) {
+      showToast(err.message || "Failed to resolve ticket", "error");
     }
   };
 
@@ -504,7 +515,31 @@ const TicketListPage = () => {
                       </span>
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
+                        {(user?.role === "admin" || user?.role === "agent") && t.status !== "Resolved" && t.status !== "Closed" && (
+                          <button
+                            className="btn btn-sm"
+                            style={{
+                              background: "rgba(16, 185, 129, 0.15)",
+                              color: "#10b981",
+                              border: "1px solid rgba(16, 185, 129, 0.35)",
+                              padding: "4px 8px",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickResolve(t._id);
+                            }}
+                            title="Mark Ticket as Resolved"
+                          >
+                            <CheckCircle2 size={13} />
+                            <span>Resolve</span>
+                          </button>
+                        )}
                         <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => navigate(`/tickets/${t._id}`)}

@@ -22,7 +22,9 @@ import {
   FileText,
   Eye,
   X,
-  Maximize2
+  Maximize2,
+  CheckCircle2,
+  RotateCcw
 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
@@ -236,7 +238,45 @@ const TicketDetailPage = () => {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          {/* Prominent Quick Resolve / Reopen Action for Admin & Agent */}
+          {(user?.role === "admin" || user?.role === "agent") && ticket.status !== "Resolved" && ticket.status !== "Closed" && (
+            <button
+              onClick={() => handleUpdateField({ status: "Resolved" })}
+              disabled={updatingStatus}
+              className="btn btn-sm"
+              style={{
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                color: "#fff",
+                border: "none",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 16px",
+                borderRadius: "var(--radius-md)",
+                boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
+              }}
+              title="Resolve Ticket"
+            >
+              <CheckCircle2 size={15} />
+              <span>{updatingStatus ? "Resolving..." : "Resolve Ticket"}</span>
+            </button>
+          )}
+
+          {(user?.role === "admin" || user?.role === "agent") && ticket.status === "Resolved" && (
+            <button
+              onClick={() => handleUpdateField({ status: "In Progress" })}
+              disabled={updatingStatus}
+              className="btn btn-secondary btn-sm"
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              title="Reopen ticket into In Progress"
+            >
+              <RotateCcw size={14} />
+              <span>Reopen Ticket</span>
+            </button>
+          )}
+
           <button
             onClick={() => navigate("/tickets")}
             className="btn btn-secondary btn-sm"
@@ -682,6 +722,56 @@ const TicketDetailPage = () => {
                   <option value="Resolved">Resolved</option>
                   <option value="Closed">Closed</option>
                 </select>
+
+                {ticket.status !== "Resolved" && ticket.status !== "Closed" ? (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateField({ status: "Resolved" })}
+                    disabled={updatingStatus}
+                    className="btn btn-sm"
+                    style={{
+                      width: "100%",
+                      marginTop: "10px",
+                      background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                      color: "#fff",
+                      border: "none",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      padding: "8px 12px",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "0 2px 10px rgba(16, 185, 129, 0.3)",
+                    }}
+                  >
+                    <CheckCircle2 size={15} />
+                    <span>{updatingStatus ? "Updating..." : "Mark as Resolved"}</span>
+                  </button>
+                ) : (
+                  <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateField({ status: "In Progress" })}
+                      disabled={updatingStatus}
+                      className="btn btn-secondary btn-sm"
+                      style={{ flex: 1, fontSize: "11.5px" }}
+                    >
+                      Reopen
+                    </button>
+                    {ticket.status !== "Closed" && (
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateField({ status: "Closed" })}
+                        disabled={updatingStatus}
+                        className="btn btn-secondary btn-sm"
+                        style={{ flex: 1, fontSize: "11.5px" }}
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

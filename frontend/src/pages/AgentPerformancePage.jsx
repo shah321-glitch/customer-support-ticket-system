@@ -116,20 +116,6 @@ const AgentPerformancePage = () => {
             <h1 style={{ fontSize: "22px", fontWeight: 800, color: "var(--text-primary)" }}>
               Support Agent Performance
             </h1>
-            <span
-              style={{
-                fontSize: "11px",
-                background: "rgba(239, 68, 68, 0.15)",
-                color: "#ef4444",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                padding: "2px 8px",
-                borderRadius: "20px",
-                fontWeight: 700,
-                letterSpacing: "0.5px",
-              }}
-            >
-              ADMIN PRIVILEGE ONLY
-            </span>
           </div>
           <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: 0 }}>
             Real-time tracking of agent ticket assignments, resolution velocity, and verified customer 5-star feedback.

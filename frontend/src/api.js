@@ -73,6 +73,8 @@ const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
@@ -240,7 +242,7 @@ export const api = {
     }
     pendingStatsPromise = (async () => {
       try {
-        const res = await fetch(`${API_BASE}/stats`, {
+        const res = await fetch(`${API_BASE}/stats?_t=${Date.now()}`, {
           headers: getAuthHeaders(),
         });
         const data = await res.json();
